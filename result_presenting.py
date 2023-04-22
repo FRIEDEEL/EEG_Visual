@@ -4,7 +4,7 @@ import os
 LOGDIR="training_logs"
 
 def main():
-    traininfo=read_from_logfile("230421_1117.txt")
+    traininfo=read_from_logfile("230422_1957.txt")
     # print(traininfo[:,0])
     plot_train_info(traininfo,
                     # in_range=(0,200)

@@ -20,7 +20,7 @@ import CSwork as cs
 # ------------------------- I am a split line \(ow <) -------------------------
 
 # 在cuda上训练
-TO_CUDA=False
+TO_CUDA=True
 if TO_CUDA:
     if not torch.cuda.is_available():
         TO_CUDA=False
@@ -35,13 +35,15 @@ EPOCH = 1000
 LEARNING_RATE = 0.1  # 1
 LR_DECAY_RATE = 0.1 # 2, float in [0,1]
 LR_DECAY_FREQ = 100  # 3, int
+WEIGHT_DECAY = 0.01 # 正则化项的Lambda
 HYPERPARA_INFO = {  # 将超参数记录为字典，为了存储方便
     "optimizer": "SGD",
     "lr": LEARNING_RATE,
     "batch size": BATCH_SIZE,
     "epochs": EPOCH,
     "learning rate decay rate": LR_DECAY_RATE,
-    "learning rate decay period": LR_DECAY_FREQ
+    "learning rate decay period": LR_DECAY_FREQ,
+    "regularization weight decay(lambda)": WEIGHT_DECAY
 }
 # 存储训练信息的log文件
 LOGFILE = 0
