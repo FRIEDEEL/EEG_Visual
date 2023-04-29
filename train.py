@@ -203,6 +203,7 @@ def data_test():
 
 def train_in_epoch(model, loader, optimizer):
     # 初始化记录
+    model.train()
     batch_count = 0  # batch计数
     epoch_loss = 0.0  # 总loss
     epoch_accuracy = 0.0  # epoch中预测准确率之和
@@ -232,7 +233,7 @@ def train_in_epoch(model, loader, optimizer):
 
 
 def eval_in_epoch(model, loader):
-    model.train()
+    model.eval()
     torch.set_grad_enabled(True)
     # 初始化记录
     batch_count = 0  # batch计数
