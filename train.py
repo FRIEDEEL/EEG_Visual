@@ -14,6 +14,7 @@ import time
 import calendar
 import os
 # ------------------------- I am a split line \(ow <) -------------------------
+from utils import *
 import models
 # ------------------------- I am a split line \(ow <) -------------------------
 import CSwork as cs
@@ -35,7 +36,7 @@ EPOCH = 1000
 LEARNING_RATE = 0.1  # 1
 LR_DECAY_RATE = 0.1 # 2, float in [0,1]
 LR_DECAY_FREQ = 100  # 3, int
-WEIGHT_DECAY = 0.01 # 正则化项的Lambda
+WEIGHT_DECAY = 0.005 # 正则化项的Lambda
 HYPERPARA_INFO = {  # 将超参数记录为字典，为了存储方便
     "optimizer": "SGD",
     "lr": LEARNING_RATE,
@@ -70,13 +71,8 @@ _gen_logfile_pth()
 
 def main():
     # test()
-    train([os.path.join(DATAPATH,'processed/norm2/230402_1.pth'),
-           os.path.join(DATAPATH,'processed/norm2/230402_2.pth'),
-           os.path.join(DATAPATH,'processed/norm2/230406_1.pth'),
-           os.path.join(DATAPATH,'processed/norm2/230408_1.pth'),
-           os.path.join(DATAPATH,'processed/norm2/230411_1.pth')
-           ],
-        save_to_log=True)
+    train(datadir="../data/processed/3",
+          save_to_log=True)
     # data_test()
     # train_on_CSdataset()
     pass
@@ -117,16 +113,16 @@ def train_on_CSdataset():
     pass
 
 # 细分版本的训练代码入口
-def train(datafiles, save_to_log=True):
+def train(datadir, save_to_log=True):
     if save_to_log:
         with open(LOGFILE,"a+") as f:
             f.write("Hypoparas:\n")
             for key in HYPERPARA_INFO:
                 f.write("{} : {}\n".format(key,HYPERPARA_INFO[key]))
             f.write("\n")
-
+    # 以下是一些准备工作
     # 准备数据
-    dataset = load_data_to_dataset(datafiles)
+    dataset = load_all(datadir)
     # 划分训练、验证、测试集
     datasets = split_dataset(dataset, [0.7, 0.2, 0.1])
     train_subset = datasets[0]
@@ -144,10 +140,11 @@ def train(datafiles, save_to_log=True):
                               shuffle=True)
     val_loader = DataLoader(val_subset, batch_size=BATCH_SIZE)
     test_loader = DataLoader(test_subset, batch_size=BATCH_SIZE)
-
     # 初始化训练信息
     losses = []
     accuracies = []
+    # 准备工作到此结束
+    
     for epoch in range(EPOCH):
         # 更新SGD学习率
         lr = LEARNING_RATE * (LR_DECAY_RATE)
@@ -175,7 +172,7 @@ def train(datafiles, save_to_log=True):
 # 检查数据集是否出问题了
 def data_test():
     # 准备数据
-    dataset = load_data_to_dataset([
+    dataset = load_file_to_dataset([
         'data/processed/norm2/230402_1.pth',
         'data/processed/norm2/230402_2.pth',
         'data/processed/norm2/230406_1.pth',
@@ -231,7 +228,6 @@ def train_in_epoch(model, loader, optimizer):
     epoch_accuracy = epoch_accuracy / batch_count
     return epoch_loss, epoch_accuracy
 
-
 def eval_in_epoch(model, loader):
     model.eval()
     torch.set_grad_enabled(True)
@@ -258,73 +254,6 @@ def eval_in_epoch(model, loader):
     epoch_loss = epoch_loss / batch_count
     epoch_accuracy = epoch_accuracy / batch_count
     return epoch_loss, epoch_accuracy
-
-# 从单/多个文件加载Dataset
-def load_data_to_dataset(data_path: str or list):
-    """将一个或者多个通过process程序生成的`.pth`文件作为本程序定义的DataSet加载到内存。
-
-    Args:
-        data_path (str or list): 数据文件路径
-
-    Raises:
-        ValueError: 输入类型不正确时raise一下error
-
-    Returns:
-        EEGDataSet: 本文件定义的数据集类型实例
-    """
-    if isinstance(data_path, str):
-        dataset = EEGDataSet(path=data_path)
-    elif isinstance(data_path, list):
-        sets = []
-        for path in data_path:
-            sets.append(EEGDataSet(path))
-        dataset = join_datasets(sets)
-    else:
-        raise ValueError("Argument not valid.")
-    return dataset
-
-
-# 将Dataset划分训练集，验证集和测试集
-def split_dataset(dataset, split_rate=[0.7, 0.2, 0.1], rdn_seed=42):
-    # 随机生成器
-    generator = torch.Generator().manual_seed(rdn_seed)
-    # 划分的子集
-    subsets = random_split(dataset, split_rate, generator)
-    return subsets
-
-
-# 将一个list中的dataset全部合并
-def join_datasets(datasets: list):
-    # 通过创建一个新的DataSet对象
-    new = EEGDataSet()
-    new.info = datasets[0].info.copy()
-    # 再把待合并的DataSet中的data合并到一起。
-    for dataset in datasets:
-        if dataset.info != new.info:
-            print('Warning: Joining datasets with different attributes')
-        new.data += copy.deepcopy(dataset.data)
-    return new
-
-
-# 自定义数据集类型
-class EEGDataSet(torch.utils.data.Dataset):
-
-    def __init__(self, path: str = None,to_cuda:bool=False) -> None:
-        if path:
-            self.loaded = torch.load(path)
-            self.info = self.loaded['info']
-            self.data = self.loaded['data']
-        else:
-            self.info = {}
-            self.data = []
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        # (230414)形状要改一下，原本储存为[16*500]，这里要[500*16]，
-        # 因为LSTM层输入要求第二层就是序列
-        return self.data[idx]['data'].t(), self.data[idx]['label']
 
 if __name__ == '__main__':
     main()
