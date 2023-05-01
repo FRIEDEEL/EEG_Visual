@@ -114,6 +114,17 @@ def train_on_CSdataset():
 
 # 细分版本的训练代码入口
 def train(datadir, save_to_log=True):
+    """Entrance to training code.
+
+    Args:
+        datadir (str): the directory where data is stored.
+        save_to_log (bool, optional): If `True`, save the training info (loss, \
+            accuracy, etc, to a `.txt` file named with timestamp). \
+            Defaults to True.
+
+    Returns:
+        tuple : (loss, accuracy) info, both stored in a list.
+    """    
     if save_to_log:
         with open(LOGFILE,"a+") as f:
             f.write("Hypoparas:\n")
@@ -144,7 +155,7 @@ def train(datadir, save_to_log=True):
     losses = []
     accuracies = []
     # 准备工作到此结束
-    
+
     for epoch in range(EPOCH):
         # 更新SGD学习率
         lr = LEARNING_RATE * (LR_DECAY_RATE)
